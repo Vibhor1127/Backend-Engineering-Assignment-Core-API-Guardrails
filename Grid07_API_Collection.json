@@ -1,0 +1,149 @@
+{
+  "info": {
+    "name": "Grid07 API Collection",
+    "_postman_id": "grid07-api-collection",
+    "description": "Postman collection for Grid07 Backend Assignment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Users & Bots",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8080/api/users",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john_doe\",\n  \"isPremium\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/users"
+          }
+        },
+        {
+          "name": "Create Bot",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8080/api/bots",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ReplyBot\",\n  \"personaDescription\": \"A bot that replies to posts\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Bots",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/bots"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Create Post (Human)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8080/api/posts",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"USER\",\n  \"content\": \"Hello world! This is my first post.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Post (Bot)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8080/api/posts",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"BOT\",\n  \"content\": \"I am a bot posting content.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Posts",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/posts"
+          }
+        },
+        {
+          "name": "Like a Post",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8080/api/posts/1/like",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Virality Score",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/posts/1/virality"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Add Human Comment",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8080/api/posts/1/comments",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"USER\",\n  \"content\": \"Great post!\",\n  \"depthLevel\": 0,\n  \"postOwnerId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Bot Comment",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8080/api/posts/1/comments",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"BOT\",\n  \"content\": \"Interesting perspective!\",\n  \"depthLevel\": 1,\n  \"postOwnerId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Deep Comment (depth=21, should fail)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8080/api/posts/1/comments",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"BOT\",\n  \"content\": \"Too deep!\",\n  \"depthLevel\": 21,\n  \"postOwnerId\": 1\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
