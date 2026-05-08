@@ -9,8 +9,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
-    // Set up RedisTemplate to use String keys and values
-    // This makes it easier to store and read simple values
+    // Creates a RedisTemplate that reads and writes everything as plain strings
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();

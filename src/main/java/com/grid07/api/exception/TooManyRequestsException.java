@@ -1,6 +1,6 @@
 package com.grid07.api.exception;
 
-// Thrown when any of the bot guardrails are hit
+// Thrown when a bot hits any of the guardrail limits
 public class TooManyRequestsException extends RuntimeException {
 
     public TooManyRequestsException(String message) {

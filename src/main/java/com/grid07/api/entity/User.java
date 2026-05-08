@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+// Represents a human user account
 @Entity
 @Table(name = "users")
 @Getter

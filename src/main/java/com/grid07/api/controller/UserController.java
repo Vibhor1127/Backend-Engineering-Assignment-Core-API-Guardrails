@@ -22,25 +22,25 @@ public class UserController {
         this.botRepository = botRepository;
     }
 
-    // Create a new user
+    // Saves a new user to the database
     @PostMapping("/users")
     public ResponseEntity<User> createUser(@RequestBody User user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userRepository.save(user));
     }
 
-    // Get all users
+    // Returns all registered users
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll());
     }
 
-    // Create a new bot
+    // Saves a new bot to the database
     @PostMapping("/bots")
     public ResponseEntity<Bot> createBot(@RequestBody Bot bot) {
         return ResponseEntity.status(HttpStatus.CREATED).body(botRepository.save(bot));
     }
 
-    // Get all bots
+    // Returns all registered bots
     @GetMapping("/bots")
     public ResponseEntity<List<Bot>> getAllBots() {
         return ResponseEntity.ok(botRepository.findAll());

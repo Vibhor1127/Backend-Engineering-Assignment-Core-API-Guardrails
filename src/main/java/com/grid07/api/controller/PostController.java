@@ -27,22 +27,20 @@ public class PostController {
         this.viralityService = viralityService;
     }
 
-    // ==================== POST ENDPOINTS ====================
-
-    // Create a new post
+    // Creates a new post and returns it with a 201 status
     @PostMapping("/posts")
     public ResponseEntity<Post> createPost(@RequestBody CreatePostRequest request) {
         Post post = postService.createPost(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(post);
     }
 
-    // Get all posts (bonus - helpful for testing)
+    // Returns all posts from the database
     @GetMapping("/posts")
     public ResponseEntity<List<Post>> getAllPosts() {
         return ResponseEntity.ok(postService.getAllPosts());
     }
 
-    // Add a comment to a post
+    // Adds a comment to a specific post
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<Comment> addComment(
             @PathVariable Long postId,
@@ -52,7 +50,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(comment);
     }
 
-    // Like a post
+    // Likes a post and bumps its like count
     @PostMapping("/posts/{postId}/like")
     public ResponseEntity<Post> likePost(
             @PathVariable Long postId,
@@ -62,9 +60,7 @@ public class PostController {
         return ResponseEntity.ok(post);
     }
 
-    // ==================== BONUS ENDPOINTS ====================
-
-    // Get virality score of a post from Redis
+    // Returns the virality score and bot reply count for a post
     @GetMapping("/posts/{postId}/virality")
     public ResponseEntity<Map<String, Object>> getViralityScore(@PathVariable Long postId) {
         long score = viralityService.getViralityScore(postId);

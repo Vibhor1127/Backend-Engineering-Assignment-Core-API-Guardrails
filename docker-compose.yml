@@ -6,9 +6,9 @@ services:
     image: postgres:15
     container_name: grid07-postgres
     environment:
-      POSTGRES_DB: grid07db
-      POSTGRES_USER: grid07user
-      POSTGRES_PASSWORD: grid07pass
+      POSTGRES_DB: assignmentdb
+      POSTGRES_USER: assignuser
+      POSTGRES_PASSWORD: assign123
     ports:
       - "5432:5432"
     volumes:

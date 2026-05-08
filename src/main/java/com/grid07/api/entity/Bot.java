@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+// Represents a bot account that can interact with posts
 @Entity
 @Table(name = "bots")
 @Getter

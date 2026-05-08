@@ -1,137 +1,308 @@
-# Grid07 Backend Assignment - Core API & Guardrails
+# Spring Boot Backend Assignment - Grid07
 
-## Overview
+## About This Project
 
-This project is a Spring Boot microservice that acts as the central API gateway and guardrail system. It uses PostgreSQL as the main database and Redis as the real-time gatekeeper for concurrency control and notification management.
+This project is a backend microservice built using Spring Boot. The idea is simple - it manages posts and comments like a social platform, but with strict rules to control how bots can interact with human posts. Redis is used to enforce these rules in real time, and PostgreSQL stores all the actual data.
+
+I built this phase by phase, starting with the basic REST APIs, then adding Redis guardrails, and finally the notification system with a scheduled task.
 
 ---
 
-## Tech Stack
+## Tech Used
 
 - Java 17
-- Spring Boot 3.x
-- PostgreSQL (via Spring Data JPA)
-- Redis (via Spring Data Redis)
-- Docker (for local setup)
+- Spring Boot 3.2.5
+- PostgreSQL 18 (local)
+- Redis 7 (via Docker)
+- Maven
+- Postman for testing
 
 ---
 
-## How to Run
+## How to Run This Locally
 
-### Step 1: Start PostgreSQL and Redis with Docker
+### What You Need First
+
+- JDK 17 or higher installed
+- Maven installed
+- PostgreSQL installed and running
+- Docker Desktop installed (for Redis)
+
+---
+
+### 1. Start Redis
+
+I used Docker to run Redis locally. Open terminal and run:
 
 ```bash
-docker-compose up -d
+docker run -d --name myredis -p 6379:6379 redis:7
 ```
 
-### Step 2: Build and Run the Spring Boot App
+Check if it started:
 
 ```bash
-./mvnw spring-boot:run
+docker ps
 ```
 
-The server starts on `http://localhost:8080`
+Quick test:
 
-### Step 3: Import Postman Collection
-
-Import `postman/Grid07_API_Collection.json` into Postman and start testing.
-
----
-
-## Project Structure
-
+```bash
+docker exec -it myredis redis-cli ping
 ```
-src/main/java/com/grid07/api/
-├── config/         # Redis config
-├── controller/     # REST controllers
-├── dto/            # Request/response data classes
-├── entity/         # JPA entities (User, Bot, Post, Comment)
-├── exception/      # Custom exceptions and error handler
-├── repository/     # Spring Data JPA repositories
-└── service/
-    ├── PostService.java            # Core business logic
-    ├── ViralityService.java        # All Redis operations
-    └── NotificationScheduler.java  # CRON sweeper
+
+If you see `PONG` then Redis is running fine.
+
+Next time you restart your PC, just do:
+
+```bash
+docker start myredis
 ```
 
 ---
 
-## API Endpoints
+### 2. Setup the Database
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/users | Create a user |
-| POST | /api/bots | Create a bot |
-| POST | /api/posts | Create a post |
-| GET | /api/posts | Get all posts |
-| POST | /api/posts/{id}/comments | Add a comment |
-| POST | /api/posts/{id}/like | Like a post |
-| GET | /api/posts/{id}/virality | Get virality score from Redis |
+Open terminal and go to PostgreSQL bin folder:
+
+```bash
+cd "C:\Program Files\PostgreSQL\18\bin"
+.\psql -U postgres
+```
+
+Type your postgres password. Then run:
+
+```sql
+CREATE DATABASE assignmentdb;
+CREATE USER assignuser WITH PASSWORD 'assign123';
+GRANT ALL PRIVILEGES ON DATABASE assignmentdb TO assignuser;
+GRANT ALL ON SCHEMA public TO assignuser;
+\q
+```
 
 ---
 
-## How Thread Safety is Guaranteed (Phase 2 - Atomic Locks)
+### 3. Update application.properties
 
-This was the most important part of the assignment. Here is how I handled it:
+Open `src/main/resources/application.properties` and set it like this:
 
-### The Problem
+```properties
+server.port=8080
 
-When 200 concurrent bot requests come in at the same time, a normal if-check would fail. Two threads could both read the counter as 99, both pass the check, and both write — resulting in 101 comments instead of 100.
+spring.datasource.url=jdbc:postgresql://localhost:5432/assignmentdb
+spring.datasource.username=assignuser
+spring.datasource.password=assign123
+spring.datasource.driver-class-name=org.postgresql.Driver
 
-### The Solution: Redis INCR is Atomic
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
 
-Redis's `INCR` command is **single-threaded and atomic by design**. No matter how many concurrent requests hit the server, each `INCR` call returns a unique, sequential number.
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
 
-The pattern I used in `ViralityService.incrementBotCount()`:
+spring.task.scheduling.pool.size=5
+```
 
-```java
-// Increment FIRST, then check the result
-long newCount = redisTemplate.opsForValue().increment(key);
+---
 
-if (newCount > 100) {
-    // Roll back the counter since we are rejecting this request
-    redisTemplate.opsForValue().decrement(key);
-    throw new TooManyRequestsException("Bot reply limit reached.");
+### 4. Run the Project
+
+```bash
+mvn spring-boot:run
+```
+
+Once you see this in the terminal, everything started correctly:
+
+```
+Tomcat started on port 8080
+Started Grid07Application
+[CRON] Starting notification sweep...
+[CRON] No pending notifications found.
+```
+
+---
+
+## Testing the APIs
+
+Import the Postman collection from the `postman` folder. Test in this order:
+
+**1. Create a user**
+```
+POST /api/users
+{
+  "username": "rahul_dev",
+  "isPremium": false
 }
 ```
 
-This means:
-- Thread 1 gets count = 100 → passes, saves comment
-- Thread 2 gets count = 101 → fails, counter rolled back, 429 returned
-- Thread 3 gets count = 101 → same, 429 returned
-
-The database only gets written to if Redis allows it (guardrails checked before `commentRepository.save()`). This keeps PostgreSQL as source of truth for actual content, and Redis as the gatekeeper.
-
-### Cooldown Cap
-
-The bot cooldown uses Redis key TTL:
-
-```java
-redisTemplate.opsForValue().set(key, "1", Duration.ofMinutes(10));
+**2. Create a bot**
+```
+POST /api/bots
+{
+  "name": "commentbot",
+  "personaDescription": "replies to trending posts"
+}
 ```
 
-Redis automatically deletes this key after 10 minutes, so no manual cleanup needed.
+**3. Create a post**
+```
+POST /api/posts
+{
+  "authorId": 1,
+  "authorType": "USER",
+  "content": "just finished my backend project, feels good!"
+}
+```
 
-### Notification Throttle
+**4. Add a bot comment**
+```
+POST /api/posts/1/comments
+{
+  "authorId": 1,
+  "authorType": "BOT",
+  "content": "nice one!",
+  "depthLevel": 1,
+  "postOwnerId": 1
+}
+```
 
-Pending notifications are stored in a Redis List per user. The CRON sweeper runs every 5 minutes, pops all messages, and logs a single summarized message — preventing notification spam.
+**5. Like the post**
+```
+POST /api/posts/1/like
+{
+  "userId": 1
+}
+```
+
+**6. Check virality score**
+```
+GET /api/posts/1/virality
+```
+
+Response:
+```json
+{
+  "postId": 1,
+  "viralityScore": 21,
+  "botReplyCount": 1
+}
+```
+
+**7. Test the depth limit (should fail with 429)**
+```
+POST /api/posts/1/comments
+{
+  "authorId": 1,
+  "authorType": "BOT",
+  "content": "going too deep",
+  "depthLevel": 21,
+  "postOwnerId": 1
+}
+```
 
 ---
 
-## Virality Score Breakdown
+## Endpoints
+
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | /api/users | add a user |
+| GET | /api/users | get all users |
+| POST | /api/bots | add a bot |
+| GET | /api/bots | get all bots |
+| POST | /api/posts | create a post |
+| GET | /api/posts | get all posts |
+| POST | /api/posts/{id}/comments | add comment with guardrails |
+| POST | /api/posts/{id}/like | like a post |
+| GET | /api/posts/{id}/virality | get virality score |
+
+---
+
+## Folder Structure
+
+```
+src/main/java/com/grid07/api/
+├── Grid07Application.java
+├── config/
+│   └── RedisConfig.java
+├── controller/
+│   ├── PostController.java
+│   └── UserController.java
+├── dto/
+│   ├── CreatePostRequest.java
+│   ├── CreateCommentRequest.java
+│   └── LikePostRequest.java
+├── entity/
+│   ├── User.java
+│   ├── Bot.java
+│   ├── Post.java
+│   └── Comment.java
+├── exception/
+│   ├── TooManyRequestsException.java
+│   └── GlobalExceptionHandler.java
+├── repository/
+│   ├── UserRepository.java
+│   ├── BotRepository.java
+│   ├── PostRepository.java
+│   └── CommentRepository.java
+└── service/
+    ├── PostService.java
+    ├── ViralityService.java
+    └── NotificationScheduler.java
+```
+
+---
+
+## How I Handled Thread Safety (Phase 2)
+
+This was the trickiest part. The requirement was that if 200 bots send comments at the same time, the system must stop at exactly 100.
+
+The problem with a normal if-check is that two threads can read the same counter value simultaneously and both pass. So I used Redis INCR which is atomic.
+
+The approach:
+
+```java
+long count = redisTemplate.opsForValue().increment(key);
+
+if (count > 100) {
+    redisTemplate.opsForValue().decrement(key);
+    throw new TooManyRequestsException("bot limit reached for this post");
+}
+```
+
+Increment first, then check. Redis handles INCR atomically so each of the 200 threads gets a unique number. Once it crosses 100, we decrement and reject. Database only gets written if this passes.
+
+For cooldown I used Redis TTL:
+
+```java
+redisTemplate.opsForValue().set(cooldownKey, "1", Duration.ofMinutes(10));
+```
+
+Redis removes the key automatically after 10 minutes.
+
+The app is completely stateless - no HashMaps, no static variables. Everything lives in Redis.
+
+---
+
+## Virality Points
 
 | Action | Points |
 |--------|--------|
-| Bot Reply | +1 |
-| Human Like | +20 |
-| Human Comment | +50 |
-
-All stored in Redis under `post:{id}:virality_score`.
+| Bot reply | +1 |
+| Human like | +20 |
+| Human comment | +50 |
 
 ---
 
-## Key Design Decisions
+## Notification Batching (Phase 3)
 
-1. **Stateless application** - No HashMaps or static variables. Every counter, cooldown, and pending notification lives in Redis only.
-2. **Increment-then-check pattern** - Safer than check-then-increment for atomic concurrency control.
-3. **Transaction boundary** - `@Transactional` on service methods means DB writes only happen if all Redis checks pass.
+When a bot replies to a user's post:
+- If user was notified in last 15 minutes, message goes into a Redis queue
+- If not, it logs immediately and starts 15 minute cooldown
+
+Every 5 minutes a scheduled task runs, picks up all queued messages per user, and logs one combined message. This avoids spam.
+
+Example log:
+```
+[CRON] Summarized Push Notification for User 1: Bot 2 replied to your post and 3 others interacted with your posts.
+```

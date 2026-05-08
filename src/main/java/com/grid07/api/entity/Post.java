@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+// Represents a post created by a user or a bot
 @Entity
 @Table(name = "posts")
 @Getter
@@ -18,13 +19,11 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // author_id - stores the ID of the author (User or Bot)
     @Column(name = "author_id", nullable = false)
     private Long authorId;
 
-    // tells us if the author is a bot or a human user
     @Column(name = "author_type", nullable = false)
-    private String authorType; // "USER" or "BOT"
+    private String authorType;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
@@ -35,6 +34,7 @@ public class Post {
     @Column(name = "like_count")
     private int likeCount = 0;
 
+    // Automatically sets the creation timestamp before saving
     @PrePersist
     public void setCreatedAt() {
         this.createdAt = LocalDateTime.now();

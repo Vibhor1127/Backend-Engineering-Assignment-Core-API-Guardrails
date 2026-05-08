@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+// Represents a comment on a post, made by either a user or a bot
 @Entity
 @Table(name = "comments")
 @Getter
@@ -25,18 +26,18 @@ public class Comment {
     private Long authorId;
 
     @Column(name = "author_type", nullable = false)
-    private String authorType; // "USER" or "BOT"
+    private String authorType;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    // how deep this comment is in the thread (0 = top level, 1 = reply to top, etc.)
     @Column(name = "depth_level")
     private int depthLevel = 0;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    // Automatically sets the creation timestamp before saving
     @PrePersist
     public void setCreatedAt() {
         this.createdAt = LocalDateTime.now();

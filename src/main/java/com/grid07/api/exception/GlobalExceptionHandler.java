@@ -1,5 +1,6 @@
 package com.grid07.api.exception;
 
+// Catches all exceptions globally and returns clean JSON error responses
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,6 +13,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Handles rate limit violations and returns a 429 response
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<Map<String, Object>> handleTooManyRequests(TooManyRequestsException ex) {
         Map<String, Object> error = new HashMap<>();
@@ -22,6 +24,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
     }
 
+    // Handles all other runtime errors and returns a 400 response
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
         Map<String, Object> error = new HashMap<>();
